@@ -44,8 +44,8 @@
         }
         #player {
             position: absolute;
-            width: 66%;
-            height: 66%;
+            width: 40%;
+            height: 40%;
             background-color: yellow;
             border-radius: 50%;
             box-shadow: 0 0 4px 2px yellow;
@@ -113,8 +113,8 @@
 
         function updatePlayerPosition(x, y) {
             const player = document.getElementById('player');
-            player.style.left = `${x * CELL_SIZE + CELL_SIZE * 0.17}px`;
-            player.style.top = `${y * CELL_SIZE + CELL_SIZE * 0.17}px`;
+            player.style.left = `${x * CELL_SIZE + CELL_SIZE * 0.3}px`;
+            player.style.top = `${y * CELL_SIZE + CELL_SIZE * 0.3}px`;
             playerPos = { x, y };
 
             if (grid[y][x] === 1) {
