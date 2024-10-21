@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Pac-Man Inspired Game Demo</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: black;
+            color: white;
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+            touch-action: none;
+        }
+        #gameContainer {
+            text-align: center;
+            width: 100%;
+            max-width: 400px;
+        }
+        #gameBoard {
+            display: inline-block;
+            background-color: #000033;
+            position: relative;
+        }
+        .cell {
+            position: absolute;
+            background-color: transparent;
+        }
+        .dot {
+            position: absolute;
+            width: 25%;
+            height: 25%;
+            background-color: #FFD700;
+            border-radius: 50%;
+            top: 37.5%;
+            left: 37.5%;
+            box-shadow: 0 0 2px 1px #FFD700;
+        }
+        #player {
+            position: absolute;
+            width: 66%;
+            height: 66%;
+            background-color: yellow;
+            border-radius: 50%;
+            box-shadow: 0 0 4px 2px yellow;
+            transition: all 0.1s ease;
+        }
+        #score, #gameOver {
+            margin: 10px 0;
+            font-size: 1.2em;
+        }
+        #instructions {
+            margin-top: 20px;
+            font-size: 1em;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <h1>Pac-Man Inspired Game Demo</h1>
+        <div id="score">Score: 0</div>
+        <div id="gameBoard"></div>
+        <div id="gameOver" style="display: none;">Game Over! You won!</div>
+        <div id="instructions">Use arrow keys or swipe to move. Collect all dots and reach the bottom right to win!</div>
+    </div>
+
+    <script>
+        const GRID_SIZE = 10;
+        let CELL_SIZE;
+        let grid = [];
+        let playerPos = { x: 0, y: 0 };
+        let score = 0;
+        let gameOver = false;
+
+        function initGame() {
+            const gameBoard = document.getElementById('gameBoard');
+            const containerWidth = document.getElementById('gameContainer').offsetWidth;
+            CELL_SIZE = Math.floor(containerWidth / GRID_SIZE);
+            gameBoard.style.width = `${GRID_SIZE * CELL_SIZE}px`;
+            gameBoard.style.height = `${GRID_SIZE * CELL_SIZE}px`;
+
+            for (let y = 0; y < GRID_SIZE; y++) {
+                grid[y] = [];
+                for (let x = 0; x < GRID_SIZE; x++) {
+                    grid[y][x] = 1;
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.id = `cell-${x}-${y}`;
+                    cell.style.width = `${CELL_SIZE}px`;
+                    cell.style.height = `${CELL_SIZE}px`;
+                    cell.style.left = `${x * CELL_SIZE}px`;
+                    cell.style.top = `${y * CELL_SIZE}px`;
+                    if (x !== 0 || y !== 0) {
+                        const dot = document.createElement('div');
+                        dot.className = 'dot';
+                        cell.appendChild(dot);
+                    }
+                    gameBoard.appendChild(cell);
+                }
+            }
+            grid[0][0] = 0;
+            const player = document.createElement('div');
+            player.id = 'player';
+            gameBoard.appendChild(player);
+            updatePlayerPosition(0, 0);
+        }
+
+        function updatePlayerPosition(x, y) {
+            const player = document.getElementById('player');
+            player.style.left = `${x * CELL_SIZE + CELL_SIZE * 0.17}px`;
+            player.style.top = `${y * CELL_SIZE + CELL_SIZE * 0.17}px`;
+            playerPos = { x, y };
+
+            if (grid[y][x] === 1) {
+                grid[y][x] = 0;
+                score++;
+                document.getElementById('score').textContent = `Score: ${score}`;
+                document.getElementById(`cell-${x}-${y}`).innerHTML = '';
+            }
+
+            if (x === GRID_SIZE - 1 && y === GRID_SIZE - 1) {
+                gameOver = true;
+                document.getElementById('gameOver').style.display = 'block';
+            }
+        }
+
+        function movePlayer(dx, dy) {
+            if (gameOver) return;
+            const newX = Math.max(0, Math.min(GRID_SIZE - 1, playerPos.x + dx));
+            const newY = Math.max(0, Math.min(GRID_SIZE - 1, playerPos.y + dy));
+            if (newX !== playerPos.x || newY !== playerPos.y) {
+                updatePlayerPosition(newX, newY);
+            }
+        }
+
+        document.addEventListener('keydown', (e) => {
+            switch (e.key) {
+                case 'ArrowUp': movePlayer(0, -1); break;
+                case 'ArrowDown': movePlayer(0, 1); break;
+                case 'ArrowLeft': movePlayer(-1, 0); break;
+                case 'ArrowRight': movePlayer(1, 0); break;
+            }
+        });
+
+        let touchStartX, touchStartY;
+        document.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+        }, { passive: false });
+
+        document.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+        }, { passive: false });
+
+        document.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            if (!touchStartX || !touchStartY) return;
+            const touchEndX = e.changedTouches[0].clientX;
+            const touchEndY = e.changedTouches[0].clientY;
+            const dx = touchEndX - touchStartX;
+            const dy = touchEndY - touchStartY;
+            const absDx = Math.abs(dx);
+            const absDy = Math.abs(dy);
+            if (Math.max(absDx, absDy) > 10) { // Minimum swipe distance
+                if (absDx > absDy) {
+                    movePlayer(dx > 0 ? 1 : -1, 0);
+                } else {
+                    movePlayer(0, dy > 0 ? 1 : -1);
+                }
+            }
+        }, { passive: false });
+
+        window.addEventListener('resize', () => {
+            // Reinitialize the game on resize
+            document.getElementById('gameBoard').innerHTML = '';
+            initGame();
+        });
+
+        document.addEventListener('DOMContentLoaded', initGame);
+    </script>
+</body>
+</html>
